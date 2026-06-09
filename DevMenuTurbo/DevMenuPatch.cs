@@ -749,25 +749,10 @@ public class DevMenuTurboPatch
         if (sprite != null)
         {
             image.preserveAspect = true;
+            image.type = Image.Type.Simple;
             image.sprite = sprite;
             image.enabled = true;
-            NormalizeGearThumbnailSize(image);
         }
-    }
-
-    private static void NormalizeGearThumbnailSize(Image image)
-    {
-        if (image == null || image.rectTransform == null)
-        {
-            return;
-        }
-
-        var rect = image.rectTransform;
-        rect.anchorMin = new Vector2(0f, 0.5f);
-        rect.anchorMax = new Vector2(0f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(40f, 0f);
-        rect.sizeDelta = new Vector2(58f, 58f);
     }
 
     private static bool ShouldHideGearReference(GearReference gearReference)
