@@ -8,7 +8,7 @@ namespace DevMenu;
 internal static class DevMenuTheme
 {
     private static readonly Color Surface = Rgb(0, 0, 0, 0.00f);
-    private static readonly Color SurfaceHit = Rgb(0, 0, 0, 0.025f);
+    private static readonly Color SurfaceHit = Rgb(0, 0, 0, 0.00f);
     private static readonly Color RowFill = Rgb(0, 0, 0, 0.035f);
     private static readonly Color RowHover = Rgb(170, 205, 255, 0.11f);
     private static readonly Color RowPressed = Rgb(255, 255, 255, 0.15f);
@@ -32,7 +32,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutPanel(panel);
         StyleSurface(panel._main, false);
         StyleSurface(panel._mapList, false);
         StyleSurface(panel._gearList, false);
@@ -116,7 +115,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutDataControl(self);
         StyleTree(self.transform);
         StyleButton(self._randomItem, Accent);
         StyleButton(self._unlockAllItems, Success);
@@ -135,7 +133,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutGearList(self);
         StyleTree(self.transform);
         StyleInput(self._inputField);
         StyleButton(self._head, self._currentFilter == GearList.Filter.Weapon ? Accent : Line);
@@ -166,7 +163,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutMapList(self);
         StyleTree(self.transform);
         StyleButton(self._back, Accent);
     }
@@ -178,7 +174,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutLog(self);
         StyleTree(self.transform);
         StyleButton(self._copy, Accent);
         StyleButton(self._clear, Danger);
@@ -199,7 +194,6 @@ internal static class DevMenuTheme
             return;
         }
 
-        LayoutBonusStatPanel(root);
         StyleTree(root);
 
         foreach (var element in root.GetComponentsInChildren<PlayerStatElement>(true))
@@ -234,7 +228,6 @@ internal static class DevMenuTheme
         image.raycastTarget = false;
         EnsureFrame(element.gameObject, LineSoft, 1f);
         ClearShadow(element.gameObject);
-        LayoutPlayerStatElement(element);
 
         if (element._name != null)
         {
@@ -249,7 +242,6 @@ internal static class DevMenuTheme
         StyleStatInput(element._percent);
         StyleStatInput(element._percentPoint);
         StyleStatInput(element._constant);
-        HideRepeatedStatLabels(element);
 
         if (element._final != null)
         {
@@ -262,22 +254,6 @@ internal static class DevMenuTheme
         }
     }
 
-    private static void HideRepeatedStatLabels(PlayerStatElement element)
-    {
-        foreach (var text in element.GetComponentsInChildren<TMP_Text>(true))
-        {
-            if (text == element._name
-                || text == element._final
-                || text.GetComponentInParent<Button>() != null
-                || text.GetComponentInParent<TMP_InputField>() != null)
-            {
-                continue;
-            }
-
-            text.gameObject.SetActive(false);
-        }
-    }
-
     public static void StyleGearElement(GearListElement element)
     {
         if (element == null)
@@ -286,7 +262,6 @@ internal static class DevMenuTheme
         }
 
         StyleListButton(element._button);
-        LayoutGearElement(element);
 
         if (element._thumbnail != null)
         {
@@ -328,244 +303,6 @@ internal static class DevMenuTheme
         }
     }
 
-    private static void LayoutPanel(UI.TestingTool.Panel panel)
-    {
-        StretchPanel(panel._main, 0.045f, 0.10f, 0.46f, 0.92f);
-        StretchPanel(panel._mapList, 0.035f, 0.07f, 0.965f, 0.925f);
-        StretchPanel(panel._gearList, 0.035f, 0.07f, 0.965f, 0.925f);
-        StretchPanel(panel._dataControl, 0.055f, 0.09f, 0.72f, 0.925f);
-        StretchPanel(panel._bonusStatPanel, 0.035f, 0.06f, 0.965f, 0.925f);
-        if (panel._log != null)
-        {
-            StretchPanel(panel._log.gameObject, 0.055f, 0.11f, 0.83f, 0.90f);
-        }
-
-        LayoutMainPanel(panel);
-    }
-
-    private static void LayoutMainPanel(UI.TestingTool.Panel panel)
-    {
-        Place(panel._mapName, 0f, 0f, 700f, 52f);
-        Place(panel._version, 0f, 52f, 360f, 26f);
-
-        LayoutButtons(new[]
-        {
-            panel._openMapList,
-            panel._openGearList,
-            panel._nextStage,
-            panel._nextMap
-        }, 0f, 92f, 196f, 34f, 2);
-
-        LayoutButtons(new[]
-        {
-            panel._getGold,
-            panel._getDarkquartz,
-            panel._getBone,
-            panel._getHeartQuartz
-        }, 0f, 178f, 196f, 34f, 2);
-
-        LayoutButtons(new[]
-        {
-            panel._awake,
-            panel._rerollSkill,
-            panel._damageBuff,
-            panel._hp10k,
-            panel._noCooldown,
-            panel._shield10,
-            panel._right3,
-            panel._testMap
-        }, 0f, 264f, 196f, 34f, 2);
-
-        Place(panel._hardmodeToggle, 0f, 436f, 180f, 30f);
-        Place(panel._hardmodeLevelSlider, 0f, 478f, 360f, 28f);
-        Place(panel._hardmodeClearedLevelSlider, 0f, 518f, 360f, 28f);
-        Place(panel._hardmodeClearedCountSlider, 0f, 558f, 360f, 28f);
-        Place(panel._timeScaleSlider, 0f, 606f, 360f, 28f);
-        Place(panel._timeScaleReset, 378f, 604f, 90f, 30f);
-        Place(panel._infiniteRevive, 0f, 654f, 180f, 30f);
-        Place(panel._verification, 202f, 654f, 180f, 30f);
-    }
-
-    private static void LayoutGearList(GearList self)
-    {
-        Place(self._inputField, 0f, 0f, 330f, 34f);
-        LayoutButtons(new[] { self._head, self._item, self._essence, self._upgrade }, 348f, 0f, 132f, 34f, 4);
-        Place(self._unlockSetting, 0f, 48f, 180f, 28f);
-        Place(self._lockSetting, 194f, 48f, 180f, 28f);
-        StretchContent(self._gridContainer, 0f, 92f, 0f, 0f);
-
-        var grid = Ensure<GridLayoutGroup>(self._gridContainer.gameObject);
-        grid.cellSize = new Vector2(260f, 46f);
-        grid.spacing = new Vector2(8f, 8f);
-        grid.constraint = GridLayoutGroup.Constraint.Flexible;
-        grid.childAlignment = TextAnchor.UpperLeft;
-    }
-
-    private static void LayoutMapList(MapList self)
-    {
-        Place(self._back, 0f, 0f, 120f, 34f);
-        Place(self._currentChapterFilterText, 136f, 0f, 260f, 34f);
-        Place(self._enemy, 0f, 50f, 150f, 28f);
-        Place(self._fieldNPC, 164f, 50f, 150f, 28f);
-        Place(self._darkEnemy, 328f, 50f, 170f, 28f);
-        LayoutButtons(new[]
-        {
-            self._tutorial,
-            self._castle,
-            self._chapter1,
-            self._chapter2,
-            self._chapter3,
-            self._chapter4,
-            self._chapter5,
-            self._hardmodeCastle,
-            self._hardChapter1,
-            self._hardChapter2,
-            self._hardChapter3,
-            self._hardChapter4,
-            self._hardChapter5,
-            self._hardChapter6
-        }, 0f, 94f, 124f, 31f, 7, 8f, 8f);
-        StretchContent(self._gridContainer, 0f, 174f, 0f, 0f);
-
-        var grid = Ensure<GridLayoutGroup>(self._gridContainer.gameObject);
-        grid.cellSize = new Vector2(255f, 32f);
-        grid.spacing = new Vector2(8f, 6f);
-        grid.constraint = GridLayoutGroup.Constraint.Flexible;
-        grid.childAlignment = TextAnchor.UpperLeft;
-    }
-
-    private static void LayoutDataControl(DataControl self)
-    {
-        LayoutButtons(new[]
-        {
-            self._randomItem,
-            self._unlockAllItems,
-            self._unlockAllUpgrades,
-            self._firstClear,
-            self._dCDefenseCleared,
-            self._resetSeed,
-            self._lockAllUpgrades,
-            self._itemReset,
-            self._upgradeReset,
-            self._allGearReset,
-            self._resetProgress,
-            self._dCDefenseHint
-        }, 0f, 0f, 210f, 34f, 2, 10f, 10f);
-
-        Place(self._hardmodeClearedCountSlider, 0f, 236f, 430f, 30f);
-        Place(self._hintTypeSlider, 0f, 286f, 430f, 30f);
-
-        for (var i = 0; i < self._hintToggles.Length; i++)
-        {
-            Place(self._hintToggles[i], (i % 3) * 154f, 340f + (i / 3) * 34f, 145f, 28f);
-        }
-    }
-
-    private static void LayoutLog(Log self)
-    {
-        Place(self._copy, 0f, 0f, 120f, 34f);
-        Place(self._clear, 132f, 0f, 120f, 34f);
-        Place(self._text, 0f, 52f, 1080f, 560f);
-    }
-
-    private static void LayoutBonusStatPanel(Component root)
-    {
-        EnsureStatHeader(root);
-
-        var elements = root.GetComponentsInChildren<PlayerStatElement>(true);
-        if (elements.Length > 0)
-        {
-            var parent = elements[0].transform.parent;
-            var group = Ensure<VerticalLayoutGroup>(parent.gameObject);
-            group.spacing = 6f;
-            group.padding = new RectOffset(0, 0, 82, 0);
-            group.childControlWidth = false;
-            group.childControlHeight = false;
-            group.childForceExpandWidth = false;
-            group.childForceExpandHeight = false;
-        }
-
-        foreach (var element in elements)
-        {
-            LayoutPlayerStatElement(element);
-        }
-    }
-
-    private static void LayoutPlayerStatElement(PlayerStatElement element)
-    {
-        var layout = Ensure<LayoutElement>(element.gameObject);
-        layout.preferredWidth = 1180f;
-        layout.preferredHeight = 40f;
-        layout.minHeight = 40f;
-        SetRectSize(element.transform, 1180f, 40f);
-
-        Place(element._name, 10f, 6f, 250f, 28f);
-        Place(element._percent, 330f, 6f, 118f, 28f);
-        Place(element._percentPoint, 466f, 6f, 132f, 28f);
-        Place(element._constant, 616f, 6f, 118f, 28f);
-
-        var apply = element.GetComponentInChildren<Button>(true);
-        if (apply != null)
-        {
-            Place(apply, 754f, 5f, 112f, 30f);
-        }
-
-        Place(element._final, 902f, 6f, 260f, 28f);
-    }
-
-    private static void EnsureStatHeader(Component root)
-    {
-        if (root == null || root.transform is not RectTransform)
-        {
-            return;
-        }
-
-        var header = root.transform.Find("DevMenuTurboStatHeader");
-        if (header == null)
-        {
-            var headerObject = new GameObject("DevMenuTurboStatHeader", typeof(RectTransform));
-            header = headerObject.transform;
-            header.SetParent(root.transform, false);
-        }
-
-        Place(header, 0f, 38f, 1180f, 32f);
-        EnsureHeaderText(header, "Name", "属性", 10f, 0f, 250f, 28f);
-        EnsureHeaderText(header, "Percent", "百分比", 330f, 0f, 118f, 28f);
-        EnsureHeaderText(header, "PercentPoint", "百分点", 466f, 0f, 132f, 28f);
-        EnsureHeaderText(header, "Constant", "固定值", 616f, 0f, 118f, 28f);
-        EnsureHeaderText(header, "Action", "操作", 754f, 0f, 112f, 28f);
-        EnsureHeaderText(header, "Final", "最终值", 902f, 0f, 260f, 28f);
-    }
-
-    private static void EnsureHeaderText(Transform parent, string name, string value, float x, float y, float width, float height)
-    {
-        var child = parent.Find(name);
-        if (child == null)
-        {
-            var childObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            child = childObject.transform;
-            child.SetParent(parent, false);
-        }
-
-        Place(child, x, y, width, height);
-        var text = child.GetComponent<TextMeshProUGUI>();
-        text.SetText(value);
-        text.color = TextSecondary;
-        text.alignment = TextAlignmentOptions.MidlineLeft;
-        text.enableAutoSizing = true;
-        text.fontSizeMin = 11f;
-        text.fontSizeMax = 15f;
-        text.overflowMode = TextOverflowModes.Ellipsis;
-        AddTextShadow(text.gameObject);
-    }
-
-    private static void LayoutGearElement(GearListElement element)
-    {
-        SetRectSize(element._button.transform, 260f, 46f);
-        Place(element._thumbnail, 8f, 7f, 32f, 32f);
-        Place(element._text, 48f, 5f, 200f, 36f);
-    }
-
     private static void StyleSurface(GameObject surface, bool active)
     {
         if (surface == null)
@@ -579,7 +316,6 @@ internal static class DevMenuTheme
         image.raycastTarget = false;
         ClearOutline(surface);
         ClearShadow(surface);
-        EnsureFrame(surface, active ? Accent : LineSoft, active ? 2f : 1f);
     }
 
     private static void StyleButton(Button button, Color lineColor)
@@ -890,81 +626,6 @@ internal static class DevMenuTheme
             {
                 StyleButton(button, Accent);
             }
-        }
-    }
-
-    private static void LayoutButtons(Button[] buttons, float x, float y, float width, float height, int columns, float gapX = 10f, float gapY = 8f)
-    {
-        for (var i = 0; i < buttons.Length; i++)
-        {
-            if (buttons[i] == null)
-            {
-                continue;
-            }
-
-            var col = i % columns;
-            var row = i / columns;
-            Place(buttons[i], x + col * (width + gapX), y + row * (height + gapY), width, height);
-        }
-    }
-
-    private static void StretchPanel(GameObject target, float left, float bottom, float right, float top)
-    {
-        if (target == null || target.transform is not RectTransform rt)
-        {
-            return;
-        }
-
-        rt.anchorMin = new Vector2(left, bottom);
-        rt.anchorMax = new Vector2(right, top);
-        rt.pivot = new Vector2(0f, 1f);
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
-    }
-
-    private static void StretchContent(Transform transform, float left, float top, float right, float bottom)
-    {
-        if (transform is not RectTransform rt)
-        {
-            return;
-        }
-
-        rt.anchorMin = new Vector2(0f, 0f);
-        rt.anchorMax = new Vector2(1f, 1f);
-        rt.pivot = new Vector2(0f, 1f);
-        rt.offsetMin = new Vector2(left, bottom);
-        rt.offsetMax = new Vector2(-right, -top);
-    }
-
-    private static void Place(Component component, float x, float y, float width, float height)
-    {
-        if (component == null)
-        {
-            return;
-        }
-
-        Place(component.transform, x, y, width, height);
-    }
-
-    private static void Place(Transform transform, float x, float y, float width, float height)
-    {
-        if (transform is not RectTransform rt)
-        {
-            return;
-        }
-
-        rt.anchorMin = new Vector2(0f, 1f);
-        rt.anchorMax = new Vector2(0f, 1f);
-        rt.pivot = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(x, -y);
-        rt.sizeDelta = new Vector2(width, height);
-    }
-
-    private static void SetRectSize(Transform transform, float width, float height)
-    {
-        if (transform is RectTransform rt)
-        {
-            rt.sizeDelta = new Vector2(width, height);
         }
     }
 
