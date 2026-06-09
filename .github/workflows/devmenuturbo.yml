@@ -1,0 +1,54 @@
+name: Build DevMenuTurbo
+
+on:
+  workflow_dispatch:
+    inputs:
+      skul-managed-zip-url:
+        description: "Private URL to a zip containing Skul_Data/Managed DLLs needed for compilation"
+        required: true
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - "DevMenuTurbo/**"
+      - ".github/workflows/devmenuturbo.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SKUL_ROOT: ${{ github.workspace }}/.skul
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Prepare Skul managed assemblies
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p "$SKUL_ROOT/Skul_Data/Managed"
+          curl -L "${{ inputs.skul-managed-zip-url }}" -o /tmp/skul-managed.zip
+          unzip -q /tmp/skul-managed.zip -d "$SKUL_ROOT/Skul_Data/Managed"
+
+      - name: Build DevMenuTurbo
+        if: github.event_name == 'workflow_dispatch'
+        run: dotnet build DevMenuTurbo/DevMenuTurbo.csproj -c Release -p:SkulRoot="$SKUL_ROOT"
+
+      - name: Explain skipped CI build
+        if: github.event_name == 'push'
+        run: |
+          echo "DevMenuTurbo depends on Skul's proprietary managed assemblies."
+          echo "Use workflow_dispatch with a private managed-assembly zip URL to run the full build."
+
+      - name: Upload DLL artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevMenuTurbo
+          path: DevMenuTurbo/bin/Release/net462/DevMenuTurbo.dll

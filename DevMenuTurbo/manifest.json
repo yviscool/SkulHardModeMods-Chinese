@@ -1,7 +1,7 @@
 {
     "name": "DevMenuTurbo",
-    "version_number": "0.0.1",
-    "website_url": "https://github.com/MrBacanudo/SkulHardModeMods",
-    "description": "Unlocks the Developers's cheat menu and makes it in English!",
+    "version_number": "0.0.3",
+    "website_url": "https://github.com/yviscool/SkulHardModeMods-Chinese",
+    "description": "Unlocks Skul's developer menu with deep Simplified Chinese translation, menu fixes, list cleanup, and icon/name fallbacks.",
     "dependencies": []
 }

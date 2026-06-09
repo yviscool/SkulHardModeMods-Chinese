@@ -1,8 +1,20 @@
-# Dev Menu: Turbo
+# Dev Menu: Turbo ZH
 
-Allows using the Dev Menu (F2/R3 key), with English translation and improvements:
+小骨：英雄杀手开发者菜单深度中文修复版。
 
-* Allows filling the item inventory with a right click (90 items, anyone?)
-* Allows searching for Dark abilities (which are now readable)
+功能：
 
-Disclaimer: Can break the game. Use at your own risk.
+* 启用开发者菜单（F2/R3）。
+* 将开发者菜单、地图、装备、魔镜能力、日志、数据控制、属性面板等文本补全为中文。
+* 装备/头骨/精髓列表优先使用游戏简体中文本地化名称。
+* 隐藏测试、旧版、参考、无图标等开发残留资源，避免列表出现 `Ref_`、`Former_`、`Test` 等半成品条目。
+* 修复魔镜能力搜索。
+* 道具列表支持右键填满背包。
+
+手动安装：
+
+1. 先安装 BepInEx 5。
+2. 将 `DevMenuTurbo.dll` 放入游戏目录的 `BepInEx/plugins`。
+3. 进入游戏后按 F2 或 R3 打开开发者菜单。
+
+说明：开发者菜单本身可能破坏存档或流程，请先备份存档。
