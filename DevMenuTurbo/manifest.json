@@ -1,7 +1,7 @@
 {
     "name": "DevMenuTurbo",
-    "version_number": "0.0.3",
+    "version_number": "0.1.0",
     "website_url": "https://github.com/yviscool/SkulHardModeMods-Chinese",
-    "description": "Unlocks Skul's developer menu with deep Simplified Chinese translation, menu fixes, list cleanup, and icon/name fallbacks.",
+    "description": "Unlocks Skul's developer menu with deep Simplified Chinese translation, near-transparent runtime UI rebuild, layout overhaul, list cleanup, and icon/name fallbacks.",
     "dependencies": []
 }

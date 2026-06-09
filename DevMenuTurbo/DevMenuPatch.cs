@@ -9,6 +9,7 @@ using GameResources;
 using Singletons;
 using Services;
 using Level;
+using Characters;
 using Characters.Gear.Items;
 using Characters.Gear.Synergy.Inscriptions;
 using UnityEngine.UI;
@@ -81,6 +82,8 @@ public class DevMenuTurboPatch
 
         SetText(self._gearList.transform, "返回");
         TranslateTree(self.transform);
+        DevMenuTheme.Apply(self);
+        DevMenuTheme.SetActivePanel(self, Panel.Type.Main);
 
         // Disable showing your time zone, just in case
         self._localNow.gameObject.SetActive(false);
@@ -92,6 +95,8 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenMain(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.Main);
+        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenMapList")]
@@ -99,6 +104,8 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenMapList(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.MapList);
+        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenGearList")]
@@ -107,6 +114,8 @@ public class DevMenuTurboPatch
     {
         NormalizeGearList(__instance._gearList.GetComponent<GearList>());
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.GearList);
+        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenLog")]
@@ -114,6 +123,8 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenLog(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.Log);
+        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenDataControl")]
@@ -121,13 +132,21 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenDataControl(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.DataControl);
+        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenBonusStat")]
     [HarmonyPostfix]
     static void TranslatePanelOnOpenBonusStat(ref Panel __instance)
     {
+        TranslateBonusStatPanel(__instance._bonusStatPanel);
         TranslateTree(__instance.transform);
+        DevMenuTheme.SetActivePanel(__instance, Panel.Type.BonusStat);
+        if (__instance._bonusStatPanel != null)
+        {
+            DevMenuTheme.StyleBonusStatPanel(__instance._bonusStatPanel.transform);
+        }
     }
 
     [HarmonyPatch(typeof(DataControl), "Awake")]
@@ -149,6 +168,7 @@ public class DevMenuTurboPatch
         SetText2(self._hardmodeClearedCountSlider, "魔镜通关次数");
         SetText2(self._hintTypeSlider, "线索类型");
         TranslateTree(self.transform);
+        DevMenuTheme.StyleDataControl(self);
     }
 
     [HarmonyPatch(typeof(MapList), "Awake")]
@@ -163,6 +183,14 @@ public class DevMenuTurboPatch
     static void TranslateMapListFilter(ref MapList __instance)
     {
         TranslateMapList(__instance);
+    }
+
+    [HarmonyPatch(typeof(MapListElement), "Set")]
+    [HarmonyPostfix]
+    static void StyleMapListElement(ref MapListElement __instance)
+    {
+        TranslateTree(__instance.transform);
+        DevMenuTheme.StyleListElement(__instance.gameObject);
     }
 
     private static void TranslateMapList(MapList self)
@@ -185,7 +213,26 @@ public class DevMenuTurboPatch
         SetText(self._hardChapter4, "魔镜第4章");
         SetText(self._hardChapter5, "魔镜第5章");
         SetText(self._hardChapter6, "魔镜第6章");
+        SetText(self._currentChapterFilterText, TranslateChapterName(self._currentChapterType));
         TranslateTree(self.transform);
+        DevMenuTheme.StyleMapList(self);
+    }
+
+    [HarmonyPatch(typeof(PlayerStatElement), "Set")]
+    [HarmonyPostfix]
+    static void TranslatePlayerStatElement(ref PlayerStatElement __instance, Stat.Kind kind)
+    {
+        SetText(__instance._name, TranslateText(kind.name));
+        TranslateTree(__instance.transform);
+        DevMenuTheme.StylePlayerStatElement(__instance);
+    }
+
+    [HarmonyPatch(typeof(PlayerStatElement), "Apply")]
+    [HarmonyPostfix]
+    static void TranslatePlayerStatElementAfterApply(ref PlayerStatElement __instance)
+    {
+        TranslateTree(__instance.transform);
+        DevMenuTheme.StylePlayerStatElement(__instance);
     }
 
     [HarmonyPatch(typeof(GearList), "Awake")]
@@ -236,6 +283,7 @@ public class DevMenuTurboPatch
         SetText(self._lockSetting, "掉落时锁定");
         SetInputPlaceholder(self._inputField, "搜索");
         TranslateTree(self.transform);
+        DevMenuTheme.StyleGearList(self);
     }
 
     [HarmonyPatch(typeof(Log), "Awake")]
@@ -262,6 +310,61 @@ public class DevMenuTurboPatch
         SetText(self._copy, "复制");
         SetText(self._clear, "清空");
         TranslateTree(self.transform);
+        DevMenuTheme.StyleLog(self);
+    }
+
+    private static void TranslateBonusStatPanel(GameObject panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        TranslateTree(panel.transform);
+
+        foreach (var tmpText in panel.GetComponentsInChildren<TMP_Text>(true))
+        {
+            TranslateBonusStatText(tmpText);
+        }
+
+        foreach (var uiText in panel.GetComponentsInChildren<Text>(true))
+        {
+            TranslateBonusStatText(uiText);
+        }
+
+        foreach (var element in panel.GetComponentsInChildren<PlayerStatElement>(true))
+        {
+            TranslateTree(element.transform);
+            DevMenuTheme.StylePlayerStatElement(element);
+        }
+    }
+
+    private static void TranslateBonusStatText(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        var translated = TranslateText(text.text);
+        if (translated != text.text)
+        {
+            text.SetText(translated);
+        }
+    }
+
+    private static void TranslateBonusStatText(Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        var translated = TranslateText(text.text);
+        if (translated != text.text)
+        {
+            text.text = translated;
+        }
     }
 
     private static void SetText(Component obj, string text)
@@ -379,6 +482,7 @@ public class DevMenuTurboPatch
             }
 
             ApplyGearReferencePresentation(element, element.gearReference);
+            DevMenuTheme.StyleGearElement(element);
         }
 
         foreach (var button in self._upgradeListElements)
@@ -509,6 +613,7 @@ public class DevMenuTurboPatch
         }
 
         ApplyGearThumbnailFallback(element, gearReference);
+        DevMenuTheme.StyleGearElement(element);
         if (ShouldHideGearReference(gearReference))
         {
             element.gameObject.SetActive(false);
@@ -871,6 +976,29 @@ public class DevMenuTurboPatch
         return TranslateText(text);
     }
 
+    private static string TranslateChapterName(Chapter.Type chapter)
+    {
+        return chapter switch
+        {
+            Chapter.Type.Test => "测试",
+            Chapter.Type.Castle => "城堡",
+            Chapter.Type.Tutorial => "教程",
+            Chapter.Type.Chapter1 => "第1章",
+            Chapter.Type.Chapter2 => "第2章",
+            Chapter.Type.Chapter3 => "第3章",
+            Chapter.Type.Chapter4 => "第4章",
+            Chapter.Type.Chapter5 => "第5章",
+            Chapter.Type.HardmodeCastle => "魔镜城堡",
+            Chapter.Type.HardmodeChapter1 => "魔镜第1章",
+            Chapter.Type.HardmodeChapter2 => "魔镜第2章",
+            Chapter.Type.HardmodeChapter3 => "魔镜第3章",
+            Chapter.Type.HardmodeChapter4 => "魔镜第4章",
+            Chapter.Type.HardmodeChapter5 => "魔镜第5章",
+            Chapter.Type.HardmodeChapter6 => "魔镜第6章",
+            _ => "未知章节"
+        };
+    }
+
     private static bool ContainsKorean(string text)
     {
         foreach (var c in text)
@@ -954,6 +1082,14 @@ public class DevMenuTurboPatch
         { "DemonCastle", "魔王城" },
         { "DLC", "扩展" },
         { "Stat", "属性" },
+        { "Bonus Stat", "附加属性" },
+        { "Additional", "附加" },
+        { "Percent", "百分比" },
+        { "Percent Point", "百分点" },
+        { "PercentPoint", "百分点" },
+        { "Constant", "固定值" },
+        { "Final", "最终值" },
+        { "Apply", "应用" },
         { "Copy", "复制" },
         { "Clear", "清空" },
         { "Random Item", "随机道具" },
@@ -974,15 +1110,47 @@ public class DevMenuTurboPatch
         { "PhysicalAttackDamage", "攻击力/物理" },
         { "MagicAttackDamage", "攻击力/魔法" },
         { "TakingDamage", "受到伤害减少/全部" },
+        { "TakingPhysicalDamage", "受到伤害减少/物理" },
+        { "TakingMagicDamage", "受到伤害减少/魔法" },
+        { "AttackSpeed", "攻击速度/全部" },
         { "BasicAttackSpeed", "攻击速度/普通攻击" },
         { "SkillAttackSpeed", "攻击速度/技能" },
         { "MovementSpeed", "移动速度" },
         { "ChargingSpeed", "蓄力速度" },
+        { "CooldownSpeed", "冷却速度/全部" },
         { "SkillCooldownSpeed", "技能冷却速度" },
+        { "DashCooldownSpeed", "冲刺冷却速度" },
         { "SwapCooldownSpeed", "替换冷却速度" },
         { "EssenceCooldownSpeed", "精髓冷却速度" },
+        { "SpiritAttackCooldownSpeed", "精灵攻击冷却速度" },
         { "CriticalChance", "暴击率" },
         { "CriticalDamage", "暴击伤害" },
+        { "EvasionChance", "回避率/全部" },
+        { "MeleeEvasionChance", "回避率/近战" },
+        { "RangedEvasionChance", "回避率/远程" },
+        { "ProjectileEvasionChance", "回避率/投射物" },
+        { "StoppingResistance", "硬直抗性" },
+        { "KnockbackResistance", "击退抗性" },
+        { "StatusResistance", "异常状态抗性/全部" },
+        { "StoppingPower", "硬直力" },
+        { "BasicAttackDamage", "攻击力/普通攻击" },
+        { "SkillAttackDamage", "攻击力/技能" },
+        { "BuffDuration", "增益持续时间" },
+        { "CharacterSize", "角色大小" },
+        { "DashDistance", "冲刺距离" },
+        { "StunResistance", "异常状态抗性/眩晕" },
+        { "FreezeResistance", "异常状态抗性/冰冻" },
+        { "BurnResistance", "异常状态抗性/灼烧" },
+        { "BleedResistance", "异常状态抗性/流血" },
+        { "PoisonResistance", "异常状态抗性/中毒" },
+        { "PoisonTickFrequency", "中毒伤害间隔减少" },
+        { "BleedDamage", "流血伤害" },
+        { "EmberDamage", "灼烧范围伤害" },
+        { "FreezeDuration", "额外冰冻持续时间" },
+        { "StunDuration", "额外眩晕持续时间" },
+        { "ProjectileAttackDamage", "攻击力/投射物" },
+        { "TakingHealAmount", "受到恢复量" },
+        { "IgnoreDamageReduction", "无视伤害减免" },
         { "지도", "地图" },
         { "맵", "地图" },
         { "데이터 컨트롤", "数据控制" },
@@ -1025,20 +1193,61 @@ public class DevMenuTurboPatch
         { "적", "敌人" },
         { "튜토리얼", "教程" },
         { "성", "城堡" },
+        { "추가 속성, + 되는 양", "附加属性增量" },
+        { "추가 属性, + 되는 양", "附加属性增量" },
+        { "추가 属性, + 增加量", "附加属性增量" },
+        { "추가 속성", "附加属性" },
+        { "추가 属性", "附加属性" },
+        { "속성", "属性" },
+        { "되는 양", "增加量" },
+        { "적용", "应用" },
+        { "최종", "最终值" },
         { "체력", "生命" },
         { "공격력/모두", "攻击力/全部" },
         { "공격력/물리", "攻击力/物理" },
         { "공격력/마법", "攻击力/魔法" },
         { "받는피해감소/모두", "受到伤害减少/全部" },
+        { "받는피해감소/물리", "受到伤害减少/物理" },
+        { "받는피해감소/마법", "受到伤害减少/魔法" },
+        { "공격속도/모두", "攻击速度/全部" },
         { "공격속도/기본", "攻击速度/普通攻击" },
         { "공격속도/스킬", "攻击速度/技能" },
         { "이동속도", "移动速度" },
         { "공격속도/차지", "蓄力速度" },
+        { "쿨다운가속/모두", "冷却速度/全部" },
         { "쿨다운가속/스킬", "技能冷却速度" },
+        { "쿨다운가속/대시", "冲刺冷却速度" },
         { "쿨다운가속/교대", "替换冷却速度" },
         { "쿨다운가속/정수", "精髓冷却速度" },
+        { "정령/쿨다운가속", "精灵攻击冷却速度" },
         { "치명타 확률", "暴击率" },
         { "치명타 피해량", "暴击伤害" },
+        { "회피율/모두", "回避率/全部" },
+        { "회피율/근접", "回避率/近战" },
+        { "회피율/원거리", "回避率/远程" },
+        { "회피율/투사체", "回避率/投射物" },
+        { "경직저항", "硬直抗性" },
+        { "넉백저항", "击退抗性" },
+        { "상태이상저항/모두", "异常状态抗性/全部" },
+        { "저지력", "硬直力" },
+        { "공격력/기본", "攻击力/普通攻击" },
+        { "공격력/스킬", "攻击力/技能" },
+        { "버프 지속시간", "增益持续时间" },
+        { "크기", "角色大小" },
+        { "대시거리", "冲刺距离" },
+        { "상태이상저항/스턴", "异常状态抗性/眩晕" },
+        { "상태이상저항/빙결", "异常状态抗性/冰冻" },
+        { "상태이상저항/화상", "异常状态抗性/灼烧" },
+        { "상태이상저항/출혈", "异常状态抗性/流血" },
+        { "상태이상저항/중독", "异常状态抗性/中毒" },
+        { "상태이상/중독피해빈도감소량", "中毒伤害间隔减少" },
+        { "상태이상/출혈데미지", "流血伤害" },
+        { "상태이상/화상주변데미지", "灼烧范围伤害" },
+        { "상태이상/추가빙결지속시간", "额外冰冻持续时间" },
+        { "상태이상/추가스턴지속시간", "额外眩晕持续时间" },
+        { "공격력/투사체", "攻击力/投射物" },
+        { "받는 회복량", "受到恢复量" },
+        { "피해량감소무시", "无视伤害减免" },
     };
 
     private static readonly Dictionary<string, string> InternalNameTranslations = new()
@@ -1167,7 +1376,22 @@ public class DevMenuTurboPatch
         new("Copy", "复制"),
         new("Clear", "清空"),
         new("Stat", "属性"),
+        new("Bonus Stat", "附加属性"),
+        new("Additional", "附加"),
+        new("Percent Point", "百分点"),
+        new("PercentPoint", "百分点"),
+        new("Percent", "百分比"),
+        new("Constant", "固定值"),
+        new("Final", "最终值"),
+        new("Apply", "应用"),
         new("DLC", "扩展"),
+        new("추가 속성", "附加属性"),
+        new("되는 양", "增加量"),
+        new("추가", "附加"),
+        new("속성", "属性"),
+        new("되는", "增加"),
+        new("적용", "应用"),
+        new("최종", "最终值"),
         new("버프", "加成"),
         new("데미지", "伤害"),
         new("대미지", "伤害"),
