@@ -82,8 +82,6 @@ public class DevMenuTurboPatch
 
         SetText(self._gearList.transform, "返回");
         TranslateTree(self.transform);
-        DevMenuTheme.Apply(self);
-        DevMenuTheme.SetActivePanel(self, Panel.Type.Main);
 
         // Disable showing your time zone, just in case
         self._localNow.gameObject.SetActive(false);
@@ -95,8 +93,6 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenMain(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.Main);
-        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenMapList")]
@@ -104,8 +100,6 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenMapList(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.MapList);
-        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenGearList")]
@@ -114,8 +108,6 @@ public class DevMenuTurboPatch
     {
         NormalizeGearList(__instance._gearList.GetComponent<GearList>());
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.GearList);
-        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenLog")]
@@ -123,8 +115,6 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenLog(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.Log);
-        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenDataControl")]
@@ -132,8 +122,6 @@ public class DevMenuTurboPatch
     static void TranslatePanelOnOpenDataControl(ref Panel __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.DataControl);
-        DevMenuTheme.StyleTree(__instance.transform);
     }
 
     [HarmonyPatch(typeof(Panel), "OpenBonusStat")]
@@ -142,11 +130,6 @@ public class DevMenuTurboPatch
     {
         TranslateBonusStatPanel(__instance._bonusStatPanel);
         TranslateTree(__instance.transform);
-        DevMenuTheme.SetActivePanel(__instance, Panel.Type.BonusStat);
-        if (__instance._bonusStatPanel != null)
-        {
-            DevMenuTheme.StyleBonusStatPanel(__instance._bonusStatPanel.transform);
-        }
     }
 
     [HarmonyPatch(typeof(DataControl), "Awake")]
@@ -168,7 +151,6 @@ public class DevMenuTurboPatch
         SetText2(self._hardmodeClearedCountSlider, "魔镜通关次数");
         SetText2(self._hintTypeSlider, "线索类型");
         TranslateTree(self.transform);
-        DevMenuTheme.StyleDataControl(self);
     }
 
     [HarmonyPatch(typeof(MapList), "Awake")]
@@ -190,7 +172,6 @@ public class DevMenuTurboPatch
     static void StyleMapListElement(ref MapListElement __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.StyleListElement(__instance.gameObject);
     }
 
     private static void TranslateMapList(MapList self)
@@ -215,7 +196,6 @@ public class DevMenuTurboPatch
         SetText(self._hardChapter6, "魔镜第6章");
         SetText(self._currentChapterFilterText, TranslateChapterName(self._currentChapterType));
         TranslateTree(self.transform);
-        DevMenuTheme.StyleMapList(self);
     }
 
     [HarmonyPatch(typeof(PlayerStatElement), "Set")]
@@ -224,7 +204,6 @@ public class DevMenuTurboPatch
     {
         SetText(__instance._name, TranslateText(kind.name));
         TranslateTree(__instance.transform);
-        DevMenuTheme.StylePlayerStatElement(__instance);
     }
 
     [HarmonyPatch(typeof(PlayerStatElement), "Apply")]
@@ -232,7 +211,6 @@ public class DevMenuTurboPatch
     static void TranslatePlayerStatElementAfterApply(ref PlayerStatElement __instance)
     {
         TranslateTree(__instance.transform);
-        DevMenuTheme.StylePlayerStatElement(__instance);
     }
 
     [HarmonyPatch(typeof(GearList), "Awake")]
@@ -283,7 +261,6 @@ public class DevMenuTurboPatch
         SetText(self._lockSetting, "掉落时锁定");
         SetInputPlaceholder(self._inputField, "搜索");
         TranslateTree(self.transform);
-        DevMenuTheme.StyleGearList(self);
     }
 
     [HarmonyPatch(typeof(Log), "Awake")]
@@ -310,7 +287,6 @@ public class DevMenuTurboPatch
         SetText(self._copy, "复制");
         SetText(self._clear, "清空");
         TranslateTree(self.transform);
-        DevMenuTheme.StyleLog(self);
     }
 
     private static void TranslateBonusStatPanel(GameObject panel)
@@ -335,7 +311,6 @@ public class DevMenuTurboPatch
         foreach (var element in panel.GetComponentsInChildren<PlayerStatElement>(true))
         {
             TranslateTree(element.transform);
-            DevMenuTheme.StylePlayerStatElement(element);
         }
     }
 
@@ -482,7 +457,6 @@ public class DevMenuTurboPatch
             }
 
             ApplyGearReferencePresentation(element, element.gearReference);
-            DevMenuTheme.StyleGearElement(element);
         }
 
         foreach (var button in self._upgradeListElements)
@@ -613,7 +587,6 @@ public class DevMenuTurboPatch
         }
 
         ApplyGearThumbnailFallback(element, gearReference);
-        DevMenuTheme.StyleGearElement(element);
         if (ShouldHideGearReference(gearReference))
         {
             element.gameObject.SetActive(false);
