@@ -246,6 +246,14 @@ public class DevMenuTurboPatch
         NormalizeGearList(__instance);
     }
 
+    [HarmonyPatch(typeof(GearList), "SetInscription")]
+    [HarmonyPostfix]
+    static void TranslateGearListSetInscription(ref GearList __instance)
+    {
+        TranslateGearList(__instance);
+        NormalizeGearList(__instance);
+    }
+
     private static void TranslateGearList(GearList self)
     {
         if (self == null)
@@ -468,6 +476,8 @@ public class DevMenuTurboPatch
         {
             NormalizeInscriptionButton(button);
         }
+
+        ArrangeInscriptionFilters(self);
     }
 
     private static void NormalizeUpgradeButton(Button button)
@@ -491,6 +501,52 @@ public class DevMenuTurboPatch
         }
     }
 
+    private static void ArrangeInscriptionFilters(GearList self)
+    {
+        if (self == null)
+        {
+            return;
+        }
+
+        var searchText = self._inputField != null ? self._inputField.text.Trim() : "";
+        var showFilters = self._currentFilter == GearList.Filter.Item && string.IsNullOrEmpty(searchText);
+        var siblingIndex = 0;
+
+        foreach (var button in self._inscriptionListElements)
+        {
+            if (button == null)
+            {
+                continue;
+            }
+
+            var label = ButtonLabel(button).Trim();
+            var visible = showFilters && !IsEmptyInscriptionLabel(label);
+            button.gameObject.SetActive(visible);
+            if (visible)
+            {
+                button.transform.SetSiblingIndex(siblingIndex++);
+            }
+        }
+    }
+
+    private static bool IsEmptyInscriptionLabel(string label)
+    {
+        return string.IsNullOrWhiteSpace(label)
+               || label.Equals("None", StringComparison.OrdinalIgnoreCase)
+               || label == "无";
+    }
+
+    private static string ButtonLabel(Button button)
+    {
+        if (button == null)
+        {
+            return "";
+        }
+
+        var text = button.GetComponentInChildren<Text>(true);
+        return text != null ? text.text ?? "" : "";
+    }
+
     private static void NormalizeInscriptionButton(Button button)
     {
         if (button == null)
@@ -505,6 +561,11 @@ public class DevMenuTurboPatch
         }
 
         var translated = TranslateInscriptionName(name.text);
+        if (translated == name.text)
+        {
+            translated = TranslateInscriptionName(button.name);
+        }
+
         if (!string.IsNullOrWhiteSpace(translated))
         {
             name.text = translated;
@@ -687,9 +748,26 @@ public class DevMenuTurboPatch
 
         if (sprite != null)
         {
+            image.preserveAspect = true;
             image.sprite = sprite;
             image.enabled = true;
+            NormalizeGearThumbnailSize(image);
         }
+    }
+
+    private static void NormalizeGearThumbnailSize(Image image)
+    {
+        if (image == null || image.rectTransform == null)
+        {
+            return;
+        }
+
+        var rect = image.rectTransform;
+        rect.anchorMin = new Vector2(0f, 0.5f);
+        rect.anchorMax = new Vector2(0f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(40f, 0f);
+        rect.sizeDelta = new Vector2(58f, 58f);
     }
 
     private static bool ShouldHideGearReference(GearReference gearReference)
@@ -728,6 +806,8 @@ public class DevMenuTurboPatch
         }
 
         return name.IndexOf("Test", StringComparison.OrdinalIgnoreCase) >= 0
+               || name.IndexOf("StatusEffect", StringComparison.OrdinalIgnoreCase) >= 0
+               || name.IndexOf("Status Effect", StringComparison.OrdinalIgnoreCase) >= 0
                || name.IndexOf("Former", StringComparison.OrdinalIgnoreCase) >= 0
                || name.IndexOf("Legacy", StringComparison.OrdinalIgnoreCase) >= 0
                || name.IndexOf("ChronoSample", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -902,7 +982,7 @@ public class DevMenuTurboPatch
             return exact;
         }
 
-        var parts = suffix.Replace("-", "_").Split('_');
+        var parts = SplitInternalNameParts(suffix);
         var translated = new List<string>();
         foreach (var part in parts)
         {
@@ -924,6 +1004,37 @@ public class DevMenuTurboPatch
         return string.Join(" ", translated);
     }
 
+    private static IEnumerable<string> SplitInternalNameParts(string text)
+    {
+        foreach (var token in text.Replace("-", "_").Split('_'))
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                continue;
+            }
+
+            var start = 0;
+            for (var i = 1; i < token.Length; i++)
+            {
+                var current = token[i];
+                var previous = token[i - 1];
+                var next = i + 1 < token.Length ? token[i + 1] : '\0';
+                var startsWord = char.IsUpper(current)
+                                 && (!char.IsUpper(previous)
+                                     || (next != '\0' && char.IsLower(next)));
+                if (!startsWord)
+                {
+                    continue;
+                }
+
+                yield return token.Substring(start, i - start);
+                start = i;
+            }
+
+            yield return token.Substring(start);
+        }
+    }
+
     private static string TranslateInscriptionName(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -933,6 +1044,12 @@ public class DevMenuTurboPatch
 
         var trimmed = text.Trim();
         if (InscriptionTranslations.TryGetValue(trimmed, out var exact))
+        {
+            return PreserveOuterWhitespace(text, exact);
+        }
+
+        var compact = trimmed.Replace(" ", "").Replace("-", "").Replace("_", "");
+        if (InscriptionTranslations.TryGetValue(compact, out exact))
         {
             return PreserveOuterWhitespace(text, exact);
         }
@@ -1124,6 +1241,15 @@ public class DevMenuTurboPatch
         { "ProjectileAttackDamage", "攻击力/投射物" },
         { "TakingHealAmount", "受到恢复量" },
         { "IgnoreDamageReduction", "无视伤害减免" },
+        { "Remain Branch", "残枝" },
+        { "Fallen Light", "坠落之光" },
+        { "3rd Demon Lords Horn", "第三魔王之角" },
+        { "3rd Demon Lord's Horn", "第三魔王之角" },
+        { "Status Effect Bleed", "状态效果：流血" },
+        { "Status Effect Burn", "状态效果：灼烧" },
+        { "Status Effect Freeze", "状态效果：冰冻" },
+        { "Status Effect Poison", "状态效果：中毒" },
+        { "Status Effect Stun", "状态效果：眩晕" },
         { "지도", "地图" },
         { "맵", "地图" },
         { "데이터 컨트롤", "数据控制" },
@@ -1249,6 +1375,27 @@ public class DevMenuTurboPatch
         { "Ref_GraveDigger", "掘墓人参考" },
         { "Ref_HighWarlock_2", "大魔导师参考2" },
         { "Ref_HighWarlock_2_Passive", "大魔导师被动参考2" },
+        { "IcarussDagger", "伊卡洛斯短剑" },
+        { "IcarusDagger", "伊卡洛斯短剑" },
+        { "ItemEnhancer", "道具强化器" },
+        { "LeftoverRoot", "残根" },
+        { "RemainBranch", "残枝" },
+        { "Remain Branch", "残枝" },
+        { "FallenLight", "坠落之光" },
+        { "Fallen Light", "坠落之光" },
+        { "3rdDemonLordsHorn", "第三魔王之角" },
+        { "3rd Demon Lords Horn", "第三魔王之角" },
+        { "3rd Demon Lord's Horn", "第三魔王之角" },
+        { "StatusEffectBleed", "状态效果：流血" },
+        { "StatusEffectBurn", "状态效果：灼烧" },
+        { "StatusEffectFreeze", "状态效果：冰冻" },
+        { "StatusEffectPoison", "状态效果：中毒" },
+        { "StatusEffectStun", "状态效果：眩晕" },
+        { "Status Effect Bleed", "状态效果：流血" },
+        { "Status Effect Burn", "状态效果：灼烧" },
+        { "Status Effect Freeze", "状态效果：冰冻" },
+        { "Status Effect Poison", "状态效果：中毒" },
+        { "Status Effect Stun", "状态效果：眩晕" },
     };
 
     private static readonly Dictionary<string, string> InternalSuffixTranslations = new()
@@ -1288,6 +1435,29 @@ public class DevMenuTurboPatch
         { "Hardmode", "魔镜" },
         { "Castle", "城堡" },
         { "BlackMarket", "黑市" },
+        { "Icaruss", "伊卡洛斯" },
+        { "Icarus", "伊卡洛斯" },
+        { "Dagger", "短剑" },
+        { "Remain", "残留" },
+        { "Branch", "枝" },
+        { "Fallen", "坠落" },
+        { "Light", "光" },
+        { "Demon", "魔王" },
+        { "Lord", "魔王" },
+        { "Lords", "魔王" },
+        { "Horn", "角" },
+        { "Status", "状态" },
+        { "Effect", "效果" },
+        { "Bleed", "流血" },
+        { "Bleeding", "流血" },
+        { "Burn", "灼烧" },
+        { "Freeze", "冰冻" },
+        { "Poison", "中毒" },
+        { "Stun", "眩晕" },
+        { "Item", "道具" },
+        { "Enhancer", "强化器" },
+        { "Leftover", "残留" },
+        { "Root", "根" },
     };
 
     private static readonly Dictionary<string, string> InscriptionTranslations = new()
@@ -1298,6 +1468,8 @@ public class DevMenuTurboPatch
         { "Artifact", "魔工学" },
         { "Bone", "骨头" },
         { "Brave", "勇气" },
+        { "Fairy", "童话" },
+        { "Fairy Tale", "童话" },
         { "FairyTale", "童话" },
         { "Duel", "决斗" },
         { "Fortress", "堡垒" },
@@ -1310,18 +1482,29 @@ public class DevMenuTurboPatch
         { "Heirloom", "传家宝" },
         { "Mutation", "突变" },
         { "Chase", "疾驰" },
+        { "Mana", "魔力循环" },
+        { "Mana Cycle", "魔力循环" },
         { "ManaCycle", "魔力循环" },
         { "Misfortune", "厄运" },
+        { "Absolute", "绝对零度" },
+        { "Absolute Zero", "绝对零度" },
         { "AbsoluteZero", "绝对零度" },
         { "Spoils", "战利品" },
         { "Brawl", "乱斗" },
+        { "Sun", "日月" },
+        { "Sun and Moon", "日月" },
+        { "Sun And Moon", "日月" },
         { "SunAndMoon", "日月" },
         { "Rapidity", "迅速" },
         { "Revenge", "复仇" },
         { "Poisoning", "中毒" },
+        { "Excessive", "过量出血" },
+        { "Excessive Bleeding", "过量出血" },
         { "ExcessiveBleeding", "过量出血" },
         { "Wisdom", "智慧" },
         { "Masterpiece", "杰作" },
+        { "Hidden", "隐刃" },
+        { "Hidden Blade", "隐刃" },
         { "HiddenBlade", "隐刃" },
         { "Heritage", "传承" },
         { "Treasure", "宝藏" },
